@@ -1,0 +1,110 @@
+﻿@page "/games/edit"
+@using Microsoft.EntityFrameworkCore
+@using BlazorWebAppGames.Models
+@inject IDbContextFactory<BlazorWebAppGames.Data.BlazorWebAppGamesContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h2>Game</h2>
+<hr />
+@if (Game is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="Game" OnValidSubmit="UpdateGame" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert"/>
+                <input type="hidden" name="Game.Id" value="@Game.Id" />
+                <div class="mb-3">
+                    <label for="title" class="form-label">Title:</label>
+                    <InputText id="title" @bind-Value="Game.Title" class="form-control" />
+                    <ValidationMessage For="() => Game.Title" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="releasedate" class="form-label">Release Date:</label>
+                    <InputDate id="releasedate" @bind-Value="Game.ReleaseDate" class="form-control" />
+                    <ValidationMessage For="() => Game.ReleaseDate" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="genre" class="form-label">Genre:</label>
+                    <InputText id="genre" @bind-Value="Game.Genre" class="form-control" />
+                    <ValidationMessage For="() => Game.Genre" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="price" class="form-label">Price:</label>
+                    <InputNumber id="price" @bind-Value="Game.Price" class="form-control" />
+                    <ValidationMessage For="() => Game.Price" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="score" class="form-label">Score:</label>
+                    <InputText id="score" @bind-Value="Game.Score" class="form-control" />
+                    <ValidationMessage For="() => Game.Score" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/games">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private Game? Game { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        Game ??= await context.Game.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (Game is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task UpdateGame()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(Game!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        //concurrency exceptions are when two users make conflicting changes to an entry at the same time
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!GameExists(Game!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/games");
+    }
+
+    private bool GameExists(int id)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.Game.Any(game => game.Id == id);
+    }
+}

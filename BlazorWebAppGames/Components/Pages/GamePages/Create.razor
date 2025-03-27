@@ -1,0 +1,65 @@
+﻿@page "/games/create"
+@using Microsoft.EntityFrameworkCore
+@using BlazorWebAppGames.Models
+@inject IDbContextFactory<BlazorWebAppGames.Data.BlazorWebAppGamesContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>Game</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <!-- When a valid form is submitted, run the AddGame method -->
+        <EditForm method="post" Model="Game" OnValidSubmit="AddGame" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert"/>
+            <div class="mb-3">
+                <label for="title" class="form-label">Title:</label> 
+                <InputText id="title" @bind-Value="Game.Title" class="form-control" /> 
+                <ValidationMessage For="() => Game.Title" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="releasedate" class="form-label">Release Date:</label> 
+                <InputDate id="releasedate" @bind-Value="Game.ReleaseDate" class="form-control" /> 
+                <ValidationMessage For="() => Game.ReleaseDate" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="genre" class="form-label">Genre:</label> 
+                <InputText id="genre" @bind-Value="Game.Genre" class="form-control" /> 
+                <ValidationMessage For="() => Game.Genre" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="price" class="form-label">Price:</label> 
+                <InputNumber id="price" @bind-Value="Game.Price" class="form-control" /> 
+                <ValidationMessage For="() => Game.Price" class="text-danger" /> 
+            </div>
+            <div class="mb-3">
+                <label for="rating" class="form-label">Rating:</label>
+                <InputText id="rating" @bind-Value="Game.Score" class="form-control" />
+                <ValidationMessage For="() => Game.Score" class="text-danger" />
+            </div>
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/games">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private Game Game { get; set; } = new();
+
+    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task AddGame()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Game.Add(Game);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/games");
+    }
+}

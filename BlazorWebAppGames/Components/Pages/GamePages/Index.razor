@@ -1,0 +1,62 @@
+﻿@page "/games"
+<!-- use interactive server rendering to allow for UI interactivity -->
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using BlazorWebAppGames.Models
+@using BlazorWebAppGames.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<BlazorWebAppGames.Data.BlazorWebAppGamesContext> DbFactory
+
+<PageTitle>Index</PageTitle>
+
+<h1>Index</h1>
+
+<div>
+    <!-- data-enhance provides a faster response and avoids reloading the page -->
+    <!-- data-permanent keeps the search term in the search bar after submitting -->
+    <input type="search" @bind="titleFilter" @bind:event="oninput" />
+</div>
+
+<p>
+    <a href="games/create">Create New</a>
+</p>
+
+<div>
+    <QuickGrid Class="table" Items="FilteredGames" Pagination="pagination">
+        <!-- set the pagination state (defined in atcode below) to show entries in pages rather than one long list-->
+        <Paginator State="pagination" />
+        <!-- set title to sortable so the user can sort game title results -->
+        <PropertyColumn Property="game => game.Title" Sortable="true"/>
+        <!-- the displayed name of a column can be changed from its name in the model, as shown below -->
+        <PropertyColumn Property="game => game.ReleaseDate" title="Release Date" />
+
+        <PropertyColumn Property="game => game.Genre" />
+        <PropertyColumn Property="game => game.Price" />
+        <PropertyColumn Property="game => game.Score" />
+        <TemplateColumn Context="game">
+            <a href="@($"games/edit?id={game.Id}")">Edit</a> |
+            <a href="@($"games/details?id={game.Id}")">Details</a> |
+            <a href="@($"games/delete?id={game.Id}")">Delete</a>
+        </TemplateColumn>
+    </QuickGrid>
+</div>
+
+@code {
+    private BlazorWebAppGamesContext context = default!;
+
+    private PaginationState pagination = new PaginationState { ItemsPerPage = 5 };
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+
+    //the user's input is used as a search filter
+    private string titleFilter = string.Empty;
+
+    private IQueryable<Game> FilteredGames =>
+        context.Game.Where(m => m.Title!.Contains(titleFilter));
+}
